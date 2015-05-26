@@ -10,6 +10,8 @@
     "jade": "*",
 	"mongodb": "*",
 	"hbs": "*",
-	"twilio" : "*"
+	"twilio" : "*",
+	"restler" : "*",
+	"hbs": "*"
   }
 }

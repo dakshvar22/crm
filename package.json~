@@ -9,6 +9,9 @@
     "express": "3.2.6",
     "jade": "*",
 	"mongodb": "*",
-	"hbs": "*"
+	"hbs": "*",
+	"twilio" : "*",
+	"restler" : "*",
+	"hbs": "*",
   }
 }

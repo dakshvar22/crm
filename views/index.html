@@ -1,3 +1,19 @@
-<!DOCTYPE html><html><head><title></title><link rel="stylesheet" 
-href="/stylesheets/style.css"></head><body><h1></h1><p>Welcome to Crm
-</p><ul><li> <a href="./userlist">Display list of users</a></li><li><a href="http://localhost:3000/newuser">Add a user</a></li><li><a href="http://localhost:3000/changeuser">Update a user</a></li><li><a href="http://localhost:3000/remuser">Delete a user</a></li></ul></body></html>
+<!doctype html>
+<html ng-app="app" >
+<head>
+  <meta charset="utf-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular.min.js"></script>
+  <script src="js/app.js"></script>
+  <title>Todos $http</title>
+  <!--<link rel="stylesheet" href="style.css">-->
+  <script>document.write("<base href=\"" + document.location + "\" />");</script>
+  
+</head>
+<body ng-controller="TodoCtrl">
+  <ul>
+    <li ng-repeat="todo in todos">
+      {{todo.text}} - <em>{{todo.done}}</em>
+    </li>
+  </ul>
+</body>
+</html>

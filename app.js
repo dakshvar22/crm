@@ -1,20 +1,21 @@
 var express = require('express')
   , routes = require('./routes')
-  , user = require('./routes/user')
+  , /*user = require('./routes/user')
   , userlist = require('./routes/userlist')
   , newuser = require('./routes/newuser')
   , adduser = require('./routes/adduser')
   , changeuser = require('./routes/changeuser')
   , updateuser = require('./routes/updateuser')
   , remuser = require('./routes/remuser')
-  , deleteuser = require('./routes/deleteuser')
-  , http = require('http')
+  , deleteuser = require('./routes/deleteuser')*/
+    http = require('http')
   , path = require('path');
   
   
 
 var url = require('url');
 var hbs = require('hbs');
+var fs = require('fs');
 
 hbs.registerHelper('raw-helper', function(options) {
   return options.fn();
@@ -48,9 +49,9 @@ MongoClient.connect(conn_str, function(err, database) {
   db = database;
 }); 
 
-var client = require('twilio')('AC23a1cb8cfa50c074ef2b1e734db0ce1b','9436917844249ca9c4300a55c07c8fd3');
+//var client = require('twilio')('AC23a1cb8cfa50c074ef2b1e734db0ce1b','9436917844249ca9c4300a55c07c8fd3');
 //var phone = client.getPhoneNumber('+12195766594');
-
+var twilioAPI = require('./twilio.js');
 
 var app = express();
 var output = {};
@@ -82,10 +83,11 @@ app.get('/', routes.index);
 app.get('/adduser', function(req,res){
 	var url_parts = url.parse(req.url, true);
 	var FirstName = url_parts.query.firstname;
+	var number = url_parts.query.num;
 	console.log(FirstName);
     var LastName = url_parts.query.lastname;
     var reportsTo = url_parts.query.report;
-    var emailId = url_parts.query.email
+    var emailId = url_parts.query.email;
 
     
     var collection = db.collection('users');
@@ -94,7 +96,8 @@ app.get('/adduser', function(req,res){
         "FirstName" : FirstName,
         "LastName" : LastName,
         "ReportsTo" : reportsTo,
-        "EmailId" : emailId
+        "EmailId" : emailId,
+        "Number" : number
     }, function (err, doc) {
         if (err) {
             res.send("There was a problem adding the information to the database.");
@@ -107,7 +110,7 @@ app.get('/adduser', function(req,res){
     });
 });
 app.get('/getusers', function(req,res){
-	client.sendSms({
+	/*client.sendSms({
     to:'+917259981090',
     from:'+13127560328',
     body:'ahoy hoy! Testing Twilio and node.js'
@@ -115,14 +118,16 @@ app.get('/getusers', function(req,res){
     if (!error) {
         console.log('Success! The SID for this SMS message is:');
         console.log(message.sid);
-		console.log('Message sent on:');
+ 
+        console.log('Message sent on:');
         console.log(message.dateCreated);
     } else {
         console.log('Oops! There was an error.');
     }
-	});
+	});*/
+	//twilioAPI.parse();
 	db.collection('users').find().toArray(function (err, items) {
-        res.json(items);
+        res.json({'users':items});
     });
 });
 app.get('/deleteuser',function(req,res){
@@ -141,30 +146,52 @@ app.get('/deleteuser',function(req,res){
 app.get('/api/sentiment',function(req,res,sentiment){
 	var url_parts = url.parse(req.url, true);
 	var text_raw = url_parts.query.text;
+	var clientNumber = url_parts.query.clientNum;
+	var customerNumber = url_parts.query.custNum;
+	var timestamp = url_parts.query.time;
 	console.log(text_raw);
 	alchemyapi.sentiment('text', text_raw, {}, function(response) {
 		output['sentiment'] = { text:text_raw, response:JSON.stringify(response,null,4), results:response['docSentiment'] };
 		//text(req, res, output);
 		console.log(response);
+		var collection = db.collection('textAnalysis');
+
+		collection.insert({
+			"clientNumber" : clientNumber,
+			"text" : text_raw,
+			"customer" : customerNumber,
+			"analysis" : response,
+			"timestamp" : timestamp
+		}, function (err, doc) {
+			if (err) {
+				res.send("There was a problem adding the information to the database.");
+			}
+			else {
+				//res.location("userlist");
+				//res.redirect("userlist");
+				res.render('index');
+			}
+		});
 		res.json(response);
+		
 		//sentiment = JSON.stringify(response,null,4)
 		//console.log(typeof sentiment);
 	});
 	
 });
 
-
-/*app.get('/users', user.list);
-app.get('/helloworld', routes.index);
-//app.get('/userlist', userlist.list);
-app.get('/newuser', newuser.list);
-app.post('/adduser',adduser.list);
-app.get('/changeuser', changeuser.list);
-app.post('/updateuser', updateuser.list);
-app.get('/remuser', remuser.list);
-app.post('/deleteuser',deleteuser.list);
-*/
-//app.get('/userlist',function(req,res){res.send
+app.get('/api/getAnalysis',function(req,res){
+	db.collection('textAnalysis').find().toArray(function (err, items) {
+        res.json(items);
+    });
+});
+app.get('/api/getAnalysisByNum',function(req,res){
+	var url_parts = url.parse(req.url, true);
+	var num = url_parts.query.num;
+	db.collection('textAnalysis').find({clientNumber:num}).toArray(function (err, items) {
+        res.json(items);
+    });
+});
 // Create Web server and listen on port 3000
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
